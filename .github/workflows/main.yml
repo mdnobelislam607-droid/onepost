@@ -29,6 +29,16 @@ jobs:
           }
           EOF
       - run: flutter pub get
+      - name: Build APK (for phone testing)
+        run: >
+          flutter build apk --release
+          --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          --dart-define=BACKEND_URL=${{ secrets.BACKEND_URL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onepost-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
       - name: Build AAB
         run: >
           flutter build appbundle --release
