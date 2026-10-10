@@ -1,0 +1,30 @@
+name: Build Android AAB
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Generate Android project
+        run: flutter create --platforms=android --org com.onepost --project-name onepost .
+      - name: Allow internet permission
+        run: |
+          sed -i 's#<application#<uses-permission android:name="android.permission.INTERNET"/>\n    <application#' android/app/src/main/AndroidManifest.xml
+      - run: flutter pub get
+      - name: Build AAB
+        run: >
+          flutter build appbundle --release
+          --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          --dart-define=BACKEND_URL=${{ secrets.BACKEND_URL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: onepost-aab
+          path: build/app/outputs/bundle/release/*.aab
